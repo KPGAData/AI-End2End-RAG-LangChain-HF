@@ -1,5 +1,4 @@
 .env
-data/vectorstore
 paul-graham-to-kindle/
 __pycache__/
 .chainlit

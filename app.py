@@ -52,20 +52,21 @@ hf_embeddings = HuggingFaceEndpointEmbeddings(
     task="feature-extraction",
     huggingfacehub_api_token=HF_TOKEN,
 )
+DATA_DIR = "./data"
+VECTOR_STORE_DIR = os.path.join(DATA_DIR, "vectorstore")
+VECTOR_STORE_PATH = os.path.join(VECTOR_STORE_DIR, "index.faiss")
 
-VECTOR_STORE_LOCATION = "./data/vectorstore"
-
-if os.path.exists(VECTOR_STORE_LOCATION):
+if os.path.exists(VECTOR_STORE_PATH):
     vectorstore = FAISS.load_local(
-        VECTOR_STORE_LOCATION,
+        VECTOR_STORE_PATH,
         hf_embeddings, 
         allow_dangerous_deserialization=True # this is necessary to load the vectorstore from disk as it's stored as a `.pkl` file.
     )
     hf_retriever = vectorstore.as_retriever()
-    print("Loaded Vectorstore at " + VECTOR_STORE_LOCATION)
+    print("Loaded Vectorstore at " + VECTOR_STORE_DIR)
 else:
     print("Indexing Files")
-    os.makedirs(VECTOR_STORE_LOCATION, exist_ok=True)
+    os.makedirs(VECTOR_STORE_DIR, exist_ok=True)
     ### 4. INDEX FILES
     ### NOTE: REMEMBER TO BATCH THE DOCUMENTS WITH MAXIMUM BATCH SIZE = 32
     for i in range(0, len(split_documents), 32):
@@ -73,7 +74,7 @@ else:
             vectorstore = FAISS.from_documents(split_documents[i:i+32], hf_embeddings)
             continue
         vectorstore.add_documents(split_documents[i:i+32])
-    vectorstore.save_local(VECTOR_STORE_LOCATION)
+    vectorstore.save_local(VECTOR_STORE_DIR)
 
 hf_retriever = vectorstore.as_retriever()
 
